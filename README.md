@@ -13,13 +13,13 @@ The shuttle state is the number of waiting customers, capped at 200. At each dec
 
 ## Installation
 
-Python 3.11 or 3.12 is required.
+Python 3.10, 3.11, or 3.12 is required.
 
 ```bash
 uv sync --extra dev
 ```
 
-For Atari, install the legal Pong ROM through the mechanism provided by the execution environment. ROM files are not included in this repository.
+For Atari, install the legal Pong ROM through the mechanism provided by the execution environment. With the declared dependencies, run `.venv/bin/AutoROM --accept-license`. ROM files are not included in this repository.
 
 ## Tests
 
