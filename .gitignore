@@ -1,0 +1,29 @@
+.DS_Store
+.coverage
+.pytest_cache/
+.ruff_cache/
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Training artifacts
+checkpoints/
+results/raw/*.npz
+results/raw/*.pt
+results/raw/*.pth
+results/raw/*.jsonl
+results/raw/*.csv
+results/raw/*.json
+results/smoke/
+
+# Atari ROMs and local environment files
+roms/
+.env
+
+# Generated report files
+report/*.aux
+report/*.log
+report/*.out
+report/*.pdf
+

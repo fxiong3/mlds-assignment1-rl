@@ -1,0 +1,50 @@
+{
+  "assumptions": {
+    "event_order": "dispatch, post-dispatch holding cost, then arrivals",
+    "queue_cap": 200,
+    "overflow_handling": "aggregate at capped state",
+    "terminal_value": 0.0,
+    "objective": "minimize discounted cumulative cost"
+  },
+  "finite_horizon": 500,
+  "value_iteration_iterations": 519,
+  "policy_iteration_iterations": 6,
+  "vi_bellman_residual": 9.413270163349807e-11,
+  "pi_bellman_residual": 9.094947017729282e-13,
+  "vi_pi_max_value_difference": 1.8649188859853894e-09,
+  "vi_pi_policy_disagreements": 0,
+  "finite_infinite_max_value_difference": 3.0763658287469298e-09,
+  "first_dispatch_state": 13,
+  "simulation_validation": {
+    "0": {
+      "predicted_value": 576.6701677643557,
+      "empirical_mean": 576.803006545055,
+      "empirical_standard_error": 1.008030359353523,
+      "absolute_error": 0.13283878069933053
+    },
+    "50": {
+      "predicted_value": 1001.5277317440899,
+      "empirical_mean": 1001.6536511186175,
+      "empirical_standard_error": 0.9888562202479731,
+      "absolute_error": 0.12591937452759794
+    },
+    "100": {
+      "predicted_value": 1709.0425409319603,
+      "empirical_mean": 1708.4682995637174,
+      "empirical_standard_error": 1.4012035391577777,
+      "absolute_error": 0.5742413682428378
+    },
+    "150": {
+      "predicted_value": 2665.0418530632483,
+      "empirical_mean": 2663.4939374153223,
+      "empirical_standard_error": 1.8630255913641125,
+      "absolute_error": 1.5479156479259473
+    },
+    "200": {
+      "predicted_value": 3821.5864771820247,
+      "empirical_mean": 3820.6385899988113,
+      "empirical_standard_error": 2.4055437448974133,
+      "absolute_error": 0.9478871832134246
+    }
+  }
+}
