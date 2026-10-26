@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
@@ -16,6 +17,7 @@ from mlds_assignment1.rl.pong import map_policy_action
 from mlds_assignment1.rl.training import (
     ExperimentConfig,
     build_model,
+    load_checkpoint_data,
     make_environment,
     observation_to_tensor,
     resolve_device,
@@ -25,17 +27,16 @@ from mlds_assignment1.rl.training import (
 
 def load_checkpoint(
     checkpoint_path: str | Path,
+    *,
+    device_override: str = "auto",
 ) -> tuple[nn.Module, ExperimentConfig, int]:
     """Load a checkpoint created by this project."""
 
-    checkpoint = torch.load(
-        Path(checkpoint_path),
-        map_location="cpu",
-        weights_only=False,
-    )
-    config = ExperimentConfig(**checkpoint["config"])
-    model = build_model(config)
+    checkpoint = load_checkpoint_data(checkpoint_path)
+    saved_config = ExperimentConfig(**checkpoint["config"])
+    model = build_model(saved_config)
     model.load_state_dict(checkpoint["model_state_dict"])
+    config = replace(saved_config, device=device_override)
     return model, config, int(checkpoint["episode"])
 
 
@@ -45,12 +46,16 @@ def evaluate_checkpoint(
     episodes: int = 500,
     output_dir: str | Path = "results/raw",
     deterministic: bool = False,
+    device: str = "auto",
 ) -> tuple[pd.DataFrame, dict[str, Any]]:
     """Evaluate a frozen policy and write per-episode rewards plus summary statistics."""
 
     if episodes <= 0:
         raise ValueError("episodes must be positive")
-    model, config, training_episode = load_checkpoint(checkpoint_path)
+    model, config, training_episode = load_checkpoint(
+        checkpoint_path,
+        device_override=device,
+    )
     device = resolve_device(config.device)
     model = model.to(device)
     model.eval()

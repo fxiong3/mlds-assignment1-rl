@@ -29,6 +29,7 @@ mlds-dp = "mlds_assignment1.dp.cli:main"
 mlds-train = "mlds_assignment1.rl.train:main"
 mlds-evaluate = "mlds_assignment1.rl.evaluate:main"
 mlds-plot = "mlds_assignment1.rl.plotting:main"
+mlds-validate = "mlds_assignment1.rl.validation:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/mlds_assignment1"]

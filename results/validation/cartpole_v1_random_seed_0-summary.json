@@ -1,0 +1,10 @@
+{
+  "environment": "CartPole-v1",
+  "policy": "uniform_random",
+  "seed": 0,
+  "episodes": 500,
+  "mean_reward": 22.98,
+  "standard_deviation": 11.713906265631461,
+  "minimum_reward": 9.0,
+  "maximum_reward": 69.0
+}

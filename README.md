@@ -57,7 +57,7 @@ On the DeepDish GPU environment, after installation and ROM setup:
 ./scripts/train_deepdish.sh
 ```
 
-The script runs the four experiment configurations with seeds 0, 1, and 2. Checkpoints are written regularly so long Pong runs can be preserved.
+The script runs the four experiment configurations with seeds 0, 1, and 2. Checkpoints include model, optimizer, RNG, episode, and metric state. Resume an interrupted run with `mlds-train --config CONFIG --episodes TARGET --resume CHECKPOINT`. Pong observations are stored on CPU and recomputed in bounded batches during optimization so an episode does not retain an unbounded GPU autograd graph.
 
 ## Evaluation
 
@@ -88,11 +88,31 @@ Use `--deterministic` only for an additional argmax-policy comparison. The prima
 
 Training plots contain both raw episode reward and the 100-episode moving average. Evaluation histograms display the sample count, mean, and population standard deviation.
 
+## Validation experiments
+
+Compare each learned policy against a uniform random policy using the same evaluation budget and episode cap:
+
+```bash
+.venv/bin/mlds-validate random --environment CartPole-v1 --episodes 500 --seed 0 --max-steps 500
+.venv/bin/mlds-validate random --environment Pong-v5 --episodes 500 --seed 0 --max-steps 10000
+```
+
+Aggregate independent trained-policy evaluation files across seeds 0, 1, and 2:
+
+```bash
+.venv/bin/mlds-validate aggregate \
+  --inputs results/raw/SEED_0.csv results/raw/SEED_1.csv results/raw/SEED_2.csv \
+  --output results/validation/aggregate.json
+```
+
+The random-policy comparison tests whether learning improves over an untrained action rule. The multi-seed aggregate reports pooled performance, variation in seed means, and a bootstrap confidence interval over independent training seeds. The per-run trace records state, action probabilities, chosen action, reward, value estimate, and discounted return for the first ten steps. Training metrics also record raw return/advantage variance and gradient norms for the baseline comparison and numerical-stability checks.
+
 ## Reproducibility notes
 
-- Each run records its full configuration and seed.
+- Each run records its full configuration and seed. This provides seed-controlled statistical reproducibility; exact CUDA bitwise reproducibility is not claimed.
 - Training metrics are saved as CSV rather than copied manually into figures.
 - The first ten transitions of the first episode are saved as an audit trace.
+- Basic REINFORCE uses the uncentered discounted return directly. Baseline experiments use the learned value estimate and record variance before optional normalization.
 - Baseline and no-baseline comparisons use the same seeds, training budgets, environment versions, and evaluation protocol.
 - Large checkpoints, ROMs, and raw training logs are intentionally excluded from Git.
 

@@ -14,6 +14,7 @@ def main() -> None:
     parser.add_argument("--seed", type=int, help="Override the configured random seed")
     parser.add_argument("--episodes", type=int, help="Override the training episode count")
     parser.add_argument("--device", help="Override device: auto, cpu, cuda, or mps")
+    parser.add_argument("--resume", help="Resume from a project checkpoint")
     arguments = parser.parse_args()
     config = load_experiment_config(
         arguments.config,
@@ -23,7 +24,7 @@ def main() -> None:
             "device": arguments.device,
         },
     )
-    _, metrics = train(config)
+    _, metrics = train(config, resume_checkpoint=arguments.resume)
     print(
         f"Completed {experiment_name(config)}: "
         f"episodes={len(metrics)}, "

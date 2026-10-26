@@ -13,6 +13,7 @@ def main() -> None:
     parser.add_argument("--checkpoint", required=True)
     parser.add_argument("--episodes", type=int, default=500)
     parser.add_argument("--output-dir", default="results/raw")
+    parser.add_argument("--device", default="auto", help="auto, cpu, cuda, or mps")
     parser.add_argument(
         "--deterministic",
         action="store_true",
@@ -24,6 +25,7 @@ def main() -> None:
         episodes=arguments.episodes,
         output_dir=arguments.output_dir,
         deterministic=arguments.deterministic,
+        device=arguments.device,
     )
     print(json.dumps(summary, indent=2))
 
