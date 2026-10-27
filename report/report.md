@@ -47,7 +47,7 @@ with $K=15$, $c_f=100$, $c_h=2$, $\gamma=0.95$, and we minimise expected discoun
 
 ## 1.2 Results
 
-![Question 2 (a)–(c). Left: $V_0$ from backward induction with $T=500$. Middle: $V^*$ from value iteration, with the policy-iteration values overlaid. Right: optimal policy from policy iteration and the greedy policy from value iteration.](figures/dp_main.png){width=100%}
+![Question 2 (a)–(c). Left: $V_0$ from backward induction with $T=500$. Middle: $V^*$ from value iteration, with the policy-iteration values overlaid. Right: optimal policy from policy iteration and the greedy policy from value iteration.](figures/dp_main.png){width=94%}
 
 The optimal policy is a threshold rule: **wait while $s\le 12$, dispatch when $s\ge 13$**. The finite-horizon policy at $t=0$ and both infinite-horizon methods give the same threshold. $V^*(0)=576.67$ and $V^*(200)=3821.59$. Value grows roughly quadratically in $s$, because a long queue takes several dispatches to clear and holding cost is paid on everyone still waiting. There is a visible kink at $s=13$: for $13\le s\le15$ dispatching empties the queue, so $V^*(13)=V^*(0)+100$ exactly (same next-state distribution, plus the dispatch fee). This identity holds in the computed values to machine precision.
 
@@ -63,13 +63,17 @@ The optimal policy is a threshold rule: **wait while $s\le 12$, dispatch when $s
 
 ## 1.4 Validation tests (RL-level, not unit tests)
 
-Everything below comes from `scripts/dp_validation_extra.py` and `mlds-dp` (outputs in `results/dp/*.json`).
+Each test below is a behavioural check, not a unit test. Tests 1 and 4 come from `./scripts/run_dp.sh` (output `results/dp/dp_validation.json`); tests 2, 3 and 5 come from `PYTHONPATH=src python scripts/dp_validation_extra.py` (output `results/dp/dp_validation_extra.json`, `report/figures/dp_convergence.png`).
 
-1. **Three methods agree.** $\max_s|V_{VI}-V_{PI}|=1.9\times10^{-9}$, policy disagreements $=0$, and $\max_s|V_0^{(500)}-V_{VI}|=3.1\times10^{-9}$. Pass criterion: below $10^{-6}$.
-2. **Convergence behaves as theory predicts** (Figure 2). The VI residual falls along the $\gamma^k$ line, which is what a $\gamma$-contraction should do. The gap $\|V_0^{(T)}-V^*\|_\infty$ is 3422, 917, 52, 4.0, 0.024 for $T=1,10,50,100,200$, shrinking roughly like $\gamma^T$. PI's Bellman residual reaches $9\times10^{-13}$ after 6 improvement steps.
-3. **Hand / brute-force check.** With deterministic arrivals ($A_t\equiv3$) and $T=10$, I enumerated all $2^{10}$ action sequences from every start state $0\dots40$ and compared the best one with backward induction. The largest gap is $1.7\times10^{-13}$.
-4. **Monte Carlo check of $V^*$.** I simulated the optimal policy for 1000 episodes × 500 steps from $s\in\{0,50,100,150,200\}$. Every empirical mean is within one standard error of the predicted value (e.g. $s=100$: predicted 1709.04, simulated 1708.47 ± 1.40).
-5. **Threshold structure and comparative statics.** The policy is monotone (wait below, dispatch above) in every setting I tried, and the threshold moves in the direction intuition predicts:
+| Test | What it checks | Pass if | Result |
+|---|---|---|---|
+| 1. Three methods agree | Backward induction ($T=500$), VI and PI should give the same $V$ and policy | $\max_s$ gap $<10^{-6}$, 0 policy disagreements | VI vs PI $1.9\times10^{-9}$, $V_0^{(500)}$ vs VI $3.1\times10^{-9}$, 0 disagreements. **Pass** |
+| 2. Convergence rate | VI is a $\gamma$-contraction, so the residual should fall like $\gamma^k$; $V_0^{(T)}\to V^*$ as $T$ grows | residual parallel to the $\gamma^k$ line; gap shrinks with $T$ | Figure 2; gap 3422, 917, 52, 4.0, 0.024 for $T=1,10,50,100,200$; PI exact after 6 steps. **Pass** |
+| 3. Brute force, deterministic arrivals | With $A_t\equiv3$ and $T=10$, enumerate all $2^{10}$ action sequences from $s=0,\dots,40$ and compare the best with backward induction | gap $<10^{-9}$ | $1.7\times10^{-13}$. **Pass** |
+| 4. Monte Carlo | Simulate the optimal policy 1000 episodes × 500 steps from $s\in\{0,50,100,150,200\}$ and compare the mean cost with $V^*(s)$ | error $<2$ standard errors at every $s$ | largest error 0.83 SE (e.g. $s=100$: 1709.04 vs 1708.47 ± 1.40). **Pass** |
+| 5. Comparative statics | Re-solve with different $c_f$, $c_h$, $K$, $\gamma$; the threshold should move in the direction intuition says (table below) | policy stays monotone and every move has the expected sign | 13/13 settings. **Pass** |
+
+Test 5 in detail:
 
 | Changed parameter | Values $\to$ threshold | Expected direction |
 |---|---|---|
@@ -84,16 +88,16 @@ Everything below comes from `scripts/dp_validation_extra.py` and `mlds-dp` (outp
 
 ## 2.1 Implementation
 
-REINFORCE in PyTorch with Adam. After each episode I compute the discounted reward-to-go $G_t=\sum_{k\ge t}\gamma^{k-t}r_k$ and minimise $-\sum_t \log\pi_\theta(a_t|s_t)\,G_t$. Using $G_t$ instead of $G_0$ at every step is the usual causality trick: it gives an unbiased estimate of the gradient of the episode's discounted return with lower variance. Like most implementations, I drop the $\gamma^t$ weight in front of each term. Returns are **not** normalised in Part 1, so Part 1 has no implicit baseline. Gradients are clipped at norm 10, and the logged gradient norm is the value before clipping.
+REINFORCE in PyTorch with Adam. After each episode I compute the discounted reward-to-go $G_t=\sum_{k\ge t}\gamma^{k-t}r_k$ and minimise $-\sum_t \log\pi_\theta(a_t|s_t)\,G_t$. Using $G_t$ instead of $G_0$ at every step relies on causality (an action cannot affect earlier rewards), which gives an unbiased estimate of the gradient of the episode's discounted return with lower variance. I drop the $\gamma^t$ factor in front of each term, as most implementations do. Returns are **not** normalised in Part 1, so Part 1 has no implicit baseline. Gradients are clipped at norm 10, and the logged gradient norm is the value before clipping.
 
 * **CartPole-v1**, $\gamma=0.95$: MLP $4\to128\to2$ (ReLU), 2000 training episodes, episodes capped at 500 steps.
-* **Pong-v5** (`ALE/Pong-v5`, default frameskip 4 and sticky actions 0.25), $\gamma=0.99$: each frame goes through the given 80×80 preprocessing. The network sees the current and previous processed frames stacked as 2 channels (conv 8×8/4 $\to$ conv 4×4/2 $\to$ FC 256). The output is a 2-way softmax mapped to environment actions **2 (RIGHT) and 3 (LEFT)** only. Episodes are capped at 10,000 agent steps.
+* **Pong-v5** (`ALE/Pong-v5`, default frameskip 4 and sticky actions 0.25), $\gamma=0.99$: each frame goes through the given 80×80 preprocessing. The network sees the current and previous processed frames stacked as 2 channels (conv 8×8/4 $\to$ conv 4×4/2 $\to$ FC 256). The output is a 2-way softmax mapped to environment actions **2 (RIGHT) and 3 (LEFT)** only. Episodes are capped at 10,000 agent steps. Every training run used a single GPU card.
 * **Learning rate.** The specified lr = 0.01 was run first for all four experiments. It works for CartPole with a baseline, but CartPole without a baseline and both Pong runs **collapsed to a deterministic policy** (Section 2.5). The reported no-baseline CartPole run and both Pong runs therefore use **lr = 0.001**. The lr = 0.01 runs are kept as a validation result.
 * **Evaluation.** After training, the frozen policy plays 500 episodes, sampling actions from $\pi_\theta$ (not argmax), with fixed per-episode seeds. The 500 episodes are split across CPU workers (`scripts/parallel_evaluate.py`); each episode keeps the same seed it would get in the sequential evaluator. Evaluation of the final Pong checkpoints ran on CPU on a less loaded DeepDish node; the Pong baseline run was moved from GPU (deepdish4) to CPU (deepdish1) at episode 300 using the checkpoint/resume mechanism, which restores model, optimiser and RNG state.
 
 ## 2.2 Part 1 (no baseline)
 
-![CartPole without baseline, lr = 0.001, seed 0 (other seeds shown as moving averages). Right: 500 evaluation rollouts.](figures/cartpole_no_baseline.png){width=100%}
+![CartPole without baseline, lr = 0.001, seed 0 (other seeds shown as moving averages). Right: 500 evaluation rollouts.](figures/cartpole_no_baseline.png){width=94%}
 
 | no baseline, lr 0.001 | seed 0 | seed 1 | seed 2 | uniform random |
 |---|---|---|---|---|
@@ -101,7 +105,7 @@ REINFORCE in PyTorch with Adam. After each episode I compute the discounted rewa
 
 Without a baseline, CartPole learns (4–6× random) but slowly and unevenly. The moving average oscillates between about 50 and 220, and no seed reaches 500 within 2000 episodes.
 
-![Pong without baseline, lr = 0.001. The dashed vertical line marks the checkpoint that was evaluated. The lr = 0.01 run is shown for comparison.](figures/pong_no_baseline.png){width=100%}
+![Pong without baseline, lr = 0.001. The dashed vertical line marks the checkpoint that was evaluated. The lr = 0.01 run is shown for comparison.](figures/pong_no_baseline.png){width=94%}
 
 For roughly the first 700 episodes the Pong agent hardly beats random play (moving average about −20.5). After that it improves steadily: −17.3 at episode 800, −11.6 at 1200 and −8.4 at 1800. Games also get much longer, from about 1,000 agent steps to about 5,000, because the agent now returns the ball. **Evaluation (checkpoint at episode 1800, 500 games): mean −11.13, std 4.17**, best game +3. That is about 9 points per game better than random (−20.43 ± 0.80). The episode-1500 checkpoint, evaluated the same way, scored −10.00 ± 3.55. The later checkpoint is not better, even though the training moving average kept rising (−9.4 at 1600, −8.4 at 1800). So with one seed, the last few hundred episodes are mostly noise around −10. Training was planned for 3000 episodes but was stopped at episode 1800 to meet the submission deadline; at ~12 s per episode, finishing would have taken several more hours.
 
@@ -109,7 +113,7 @@ For roughly the first 700 episodes the Pong agent hardly beats random play (movi
 
 **Choice.** I used a **non-constant, learned baseline** $b(s)=V_\phi(s)$. It is a second linear head on the same trunk as the policy and is trained with $0.5\cdot\mathrm{MSE}(V_\phi(s_t),G_t)$ in the same Adam step. The policy term uses $A_t=G_t-V_\phi(s_t)$ with $V_\phi$ **detached**, so the value loss cannot change the policy gradient through the advantage (a unit test checks this gradient separation). Because $b$ depends only on $s_t$, the gradient estimate stays unbiased.
 
-![CartPole with learned baseline, lr = 0.01 (the specified rate), seed 0; other seeds shown as moving averages.](figures/cartpole_baseline.png){width=100%}
+![CartPole with learned baseline, lr = 0.01 (the specified rate), seed 0; other seeds shown as moving averages.](figures/cartpole_baseline.png){width=94%}
 
 | baseline, lr 0.01 | seed 0 | seed 1 | seed 2 |
 |---|---|---|---|
@@ -118,7 +122,7 @@ For roughly the first 700 episodes the Pong agent hardly beats random play (movi
 
 At the same lr = 0.01, the no-baseline runs never left ~9 steps per episode, while all three baseline runs passed 195 within 560 episodes and one is perfect (500/500 in all 500 rollouts). Seed 0's histogram is bimodal: 433 episodes reach 500 and the rest fail early. Seed 2's final checkpoint fell from a moving average of ~490 to 370 just before training ended, which is why its evaluation is lower. Late-training instability like this is typical of plain REINFORCE at lr = 0.01. Saving the best checkpoint instead of the last one would hide it, but I report the last checkpoint.
 
-![Pong with learned baseline, lr = 0.001 (seed 2), compared with the lr = 0.01 run.](figures/pong_baseline.png){width=100%}
+![Pong with learned baseline, lr = 0.001 (seed 2), compared with the lr = 0.01 run.](figures/pong_baseline.png){width=94%}
 
 | Pong, lr 0.001, moving avg at episode | 200 | 300 | 400 | 500 | 600 |
 |---|---|---|---|---|---|
@@ -127,7 +131,7 @@ At the same lr = 0.01, the no-baseline runs never left ~9 steps per episode, whi
 
 At equal training budgets the baseline run improves much earlier. Its moving average first rises above −18 at episode 391, against 737 without the baseline. By episode 600 it is about 5 points ahead. **Evaluation (checkpoint at episode 600, 500 games): mean −12.61, std 3.23, best game +1.** This checkpoint has seen only 600 training episodes, against 1800 for the no-baseline checkpoint. Even so, it scores within 1.5 points of it. The fair comparison is the table above, at matched episode counts. This is one seed per arm, and some of the gap could be seed luck. The CartPole results, with three seeds, are the stronger evidence for the baseline.
 
-## 2.4 Edge cases (both parts)
+## 2.4 Edge cases, Part 1 (also apply to Part 2)
 
 | Edge case | Handling | Check |
 |---|---|---|
@@ -141,17 +145,39 @@ At equal training budgets the baseline run improves much earlier. Its moving ave
 
 ## 2.5 Validation tests
 
-![Left: CartPole without baseline at two learning rates and two discount factors. Middle: within-episode variance of $G_t-b(s_t)$ divided by that of $G_t$ for the baseline runs. Right: Pong gradient norm before clipping, with and without baseline.](figures/pg_validation.png){width=100%}
+![Left: CartPole without baseline at two learning rates and two discount factors. Middle: within-episode variance of $G_t-b(s_t)$ divided by that of $G_t$ for the baseline runs. Right: Pong gradient norm before clipping, with and without baseline.](figures/pg_validation.png){width=94%}
 
 1. **Random-policy reference.** Run with `mlds-validate random`, 500 episodes each. CartPole uniform random scores 23.0 ± 11.7 and Pong random scores −20.43 ± 0.80. A trained policy only counts as learned if it beats these by many standard errors. All lr = 0.001 CartPole runs (84–148) and the Pong runs reported above pass. The lr = 0.01 no-baseline CartPole runs (9.35 ± 0.79) fail: they are *worse* than random.
 2. **First 10 steps by hand** (`*-trace.json`, written for the first training episode). CartPole seed 0: actions are near 50/50 ($\pi\approx0.51/0.49$), every reward is 1, and $G_9=10.247$, $G_8=10.734=1+0.95\cdot10.247$, so the recursion checks by hand. Pong: rewards are 0 for the first 10 steps and $G_t$ grows by exactly a factor $1/0.99$ going backwards ($-1.089, -1.100, -1.111,\dots$). Environment actions are only 2 and 3.
 3. **Learning-rate test (diagnosing the collapse).** With lr = 0.01 and no baseline, all three CartPole seeds converge to ~9-step episodes. The median gradient norm over training is **exactly 0**: the softmax is saturated, the sampled action has probability $\approx$ 1, and $\nabla\log\pi=0$, so the agent can never recover. Pong at lr = 0.01 shows the same thing: every evaluation game ends 0–21 after exactly 764 steps, i.e. the paddle is stuck in one action. The reason is that all CartPole rewards are positive, so without a baseline every sampled action is reinforced, and a large step size locks in whatever was sampled early. Dropping to lr = 0.001 fixes it (left panel, green).
-4. **Discount-factor test.** With $\gamma=0.99$ (lr = 0.001, otherwise identical), CartPole learns more slowly than with $\gamma=0.95$ (purple line, left panel). This is expected: the return now sums ~100 future rewards instead of ~20, so its variance is higher and the credit signal is weaker.
-5. **Baseline reduces variance.** Middle panel: over long stretches of training, $\mathrm{Var}(G_t-V_\phi(s_t))$ within an episode is 3–30× smaller than $\mathrm{Var}(G_t)$. While seed 0 was stuck in 9-step episodes the ratio fell to $10^{-3}$, because the value head fitted those returns almost perfectly. The ratio goes back towards 1 when the policy changes faster than the critic can follow. In Pong the picture is different. Over episodes 100–600 the per-episode advantage variance with the baseline (median 0.33) is not smaller than the return variance (0.29), and the gradient norms are similar (median 115 vs 109, right panel). With rewards only every few hundred frames, the value head has not yet learned to predict the return. The faster learning in Pong therefore cannot be credited to variance reduction from this measurement alone.
+4. **Discount-factor test.** With $\gamma=0.99$ (lr = 0.001, otherwise identical), CartPole learns more slowly than with $\gamma=0.95$ (purple line, left panel): the return now sums ~100 future rewards instead of ~20, so its variance is higher and the credit signal is weaker.
+5. **Baseline reduces variance.** Middle panel: after episode 200 the median ratio $\mathrm{Var}(G_t-V_\phi(s_t))/\mathrm{Var}(G_t)$ is 0.49, 0.78 and 0.89 for the three CartPole seeds, and it is below 1 in 66–77% of episodes. Over some stretches it is 3–30× smaller. While seed 0 was stuck in 9-step episodes the ratio fell to $10^{-3}$, because the value head fitted those returns almost perfectly. The ratio goes back towards 1 when the policy changes faster than the critic can follow. In Pong the picture is different. Over episodes 100–600 the per-episode advantage variance with the baseline (median 0.33) is not smaller than the return variance (0.29), and the gradient norms are similar (median 115 vs 109, right panel). With rewards only every few hundred frames, the value head has not yet learned to predict the return. The faster learning in Pong therefore cannot be credited to variance reduction from this measurement alone.
 6. **Reduced randomness.** Acting greedily (argmax) with the CartPole baseline seed 0 checkpoint gives 481.0 ± 93.2 over 50 episodes, versus 435.0 ± 163.9 when sampling. Most of the evaluation spread comes from sampling noise in the policy, not from a bad mean policy.
 7. **Several seeds.** CartPole has 3 seeds per setting and the conclusions hold for all of them. Pong has one seed per setting because of compute, so its comparison is suggestive, not conclusive.
 
-**Pass criteria.** (1) beat random by more than 5 standard errors; (2) exact agreement with the hand recursion; (3)–(4) the direction of change matches theory; (5) ratio < 1 on average after warm-up; (6) greedy $\ge$ sampled.
+**How to run each test and how it is judged** (full commands are in the README; configs in `configs/`).
+
+| Test | How to run | Pass if | Result |
+|---|---|---|---|
+| 1 Random reference | `mlds-validate random`, 500 episodes | trained mean > random mean + 5 SE | **Pass** for lr 0.001 CartPole, CartPole baseline, both Pong; **fail** for lr 0.01 no-baseline CartPole |
+| 2 First 10 steps | written by `mlds-train` to `<run>-trace.json` | $G_t=r_t+\gamma G_{t+1}$ exactly; Pong actions only 2/3 | **Pass** |
+| 3 Learning rate | no-baseline CartPole configs, lr 0.01 vs 0.001, seeds 0–2 | collapse explained (gradient norm 0) and avoided at the lower lr | **Pass** |
+| 4 Discount factor | config `..._lr001_gamma099.yaml` | $\gamma=0.99$ learns more slowly than 0.95 | **Pass** |
+| 5 Variance with baseline | variance and gradient-norm columns of the training CSVs; `make_pg_figures.py` | median ratio < 1 after episode 200 | **Pass** CartPole (3/3 seeds); **not shown** for Pong |
+| 6 Greedy policy | `mlds-evaluate --deterministic`, 50 episodes | greedy mean $\ge$ sampled mean | **Pass** |
+| 7 Seeds | `mlds-train --seed 0/1/2` | conclusion holds for every seed | **Pass** CartPole; Pong n = 1 |
+
+## 2.6 Part 2: baseline-specific edge cases and tests
+
+| Edge case | Handling | Check |
+|---|---|---|
+| Value loss leaking into the policy update | $V_\phi$ is detached inside $A_t$; the value head gets gradient only from its MSE term | Unit test: policy-loss gradient does not reach the value head |
+| Untrained critic at the start ($V_\phi\approx0$, so $A_t\approx G_t$) | No warm-up; the critic trains from episode 1 in the same step as the policy | Variance ratio starts at 1.01–1.24 in the first episodes (seed 1), i.e. the run starts out as plain REINFORCE, then drops below 1 |
+| Critic lagging behind a fast-changing policy | Not corrected (no target network) | Ratio climbs back towards 1 during big policy changes (middle panel); reported, not hidden |
+| Shared trunk: value loss could disturb policy features | Value loss weighted 0.5; global gradient clipping at 10 | All three CartPole baseline runs still learn much faster than without a baseline |
+| Baseline must not depend on the action | $b$ is a function of $s_t$ only (separate head, no action input) | Unbiased by construction. In practice, CartPole seed 1 reaches the maximum return of 500 in all 500 rollouts, so the baseline did not pull the policy away from the optimum |
+
+The Part 2 tests are tests 3, 5 and 7 above applied to matched runs. They are: (a) same lr = 0.01, with vs without baseline (no-baseline collapses in 3/3 seeds, baseline solves CartPole in 3/3); (b) the variance ratio (test 5); (c) Pong learning curves at matched episode counts (table in 2.3).
 
 # 3. With three more months
 
