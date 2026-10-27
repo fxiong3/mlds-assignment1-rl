@@ -1,0 +1,12 @@
+{
+  "checkpoint": "checkpoints/pong_v5_no_baseline_seed_1-episode-1500.pt",
+  "environment": "Pong-v5",
+  "training_episode": 1500,
+  "episodes": 500,
+  "deterministic": false,
+  "mean_reward": -10.002,
+  "standard_deviation": 3.5521818647135737,
+  "minimum_reward": -21.0,
+  "maximum_reward": 3.0,
+  "mean_episode_length": 4745.176
+}

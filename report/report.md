@@ -89,13 +89,13 @@ REINFORCE in PyTorch with Adam. After each episode I compute the discounted rewa
 * **CartPole-v1**, $\gamma=0.95$: MLP $4\to128\to2$ (ReLU), 2000 training episodes, episodes capped at 500 steps.
 * **Pong-v5** (`ALE/Pong-v5`, default frameskip 4 and sticky actions 0.25), $\gamma=0.99$: each frame goes through the given 80×80 preprocessing. The network sees the current and previous processed frames stacked as 2 channels (conv 8×8/4 $\to$ conv 4×4/2 $\to$ FC 256). The output is a 2-way softmax mapped to environment actions **2 (RIGHT) and 3 (LEFT)** only. Episodes are capped at 10,000 agent steps.
 * **Learning rate.** The specified lr = 0.01 was run first for all four experiments. It works for CartPole with a baseline, but CartPole without a baseline and both Pong runs **collapsed to a deterministic policy** (Section 2.5). The reported no-baseline CartPole run and both Pong runs therefore use **lr = 0.001**. The lr = 0.01 runs are kept as a validation result.
-* **Evaluation.** After training, the frozen policy plays 500 episodes, sampling actions from $\pi_\theta$ (not argmax), with fixed per-episode seeds. The 500 episodes are split across CPU workers (`scripts/parallel_evaluate.py`); each episode keeps the same seed it would get in the sequential evaluator.
+* **Evaluation.** After training, the frozen policy plays 500 episodes, sampling actions from $\pi_\theta$ (not argmax), with fixed per-episode seeds. The 500 episodes are split across CPU workers (`scripts/parallel_evaluate.py`); each episode keeps the same seed it would get in the sequential evaluator. Evaluation of the final Pong checkpoints ran on CPU on a less loaded DeepDish node; the Pong baseline run was moved from GPU (deepdish4) to CPU (deepdish1) at episode 300 using the checkpoint/resume mechanism, which restores model, optimiser and RNG state.
 
 ## 2.2 Part 1 (no baseline)
 
 ![CartPole without baseline, lr = 0.001, seed 0 (other seeds shown as moving averages). Right: 500 evaluation rollouts.](figures/cartpole_no_baseline.png){width=100%}
 
-| CartPole, no baseline, lr = 0.001 | seed 0 | seed 1 | seed 2 | uniform random |
+| no baseline, lr 0.001 | seed 0 | seed 1 | seed 2 | uniform random |
 |---|---|---|---|---|
 | 500-episode mean ± std | 83.7 ± 16.8 | 147.6 ± 20.0 | 146.4 ± 11.3 | 23.0 ± 11.7 |
 
@@ -103,7 +103,7 @@ Without a baseline, CartPole learns (4–6× random) but slowly and unevenly. Th
 
 ![Pong without baseline, lr = 0.001. The dashed vertical line marks the checkpoint that was evaluated. The lr = 0.01 run is shown for comparison.](figures/pong_no_baseline.png){width=100%}
 
-PONG_NB_TEXT
+For roughly the first 700 episodes the Pong agent hardly beats random play (moving average about −20.5). After that it improves steadily: −17.3 at episode 800, −11.6 at 1200 and −8.4 at 1800. Games also get much longer, from about 1,000 agent steps to about 5,000, because the agent now returns the ball. **Evaluation (checkpoint at episode 1800, 500 games): mean −11.13, std 4.17**, best game +3. That is about 9 points per game better than random (−20.43 ± 0.80). The episode-1500 checkpoint, evaluated the same way, scored −10.00 ± 3.55. The later checkpoint is not better, even though the training moving average kept rising (−9.4 at 1600, −8.4 at 1800). So with one seed, the last few hundred episodes are mostly noise around −10. Training was planned for 3000 episodes but was stopped at episode 1800 to meet the submission deadline; at ~12 s per episode, finishing would have taken several more hours.
 
 ## 2.3 Part 2 (learned state-value baseline)
 
@@ -111,7 +111,7 @@ PONG_NB_TEXT
 
 ![CartPole with learned baseline, lr = 0.01 (the specified rate), seed 0; other seeds shown as moving averages.](figures/cartpole_baseline.png){width=100%}
 
-| CartPole, learned baseline, lr = 0.01 | seed 0 | seed 1 | seed 2 |
+| baseline, lr 0.01 | seed 0 | seed 1 | seed 2 |
 |---|---|---|---|
 | 500-episode mean ± std | 435.0 ± 163.9 | 500.0 ± 0.0 | 155.7 ± 7.0 |
 | first episode with moving avg $\ge$ 195 | 556 | 243 | 120 |
@@ -120,7 +120,12 @@ At the same lr = 0.01, the no-baseline runs never left ~9 steps per episode, whi
 
 ![Pong with learned baseline, lr = 0.001 (seed 2), compared with the lr = 0.01 run.](figures/pong_baseline.png){width=100%}
 
-PONG_BL_TEXT
+| Pong, lr 0.001, moving avg at episode | 200 | 300 | 400 | 500 | 600 |
+|---|---|---|---|---|---|
+| no baseline (seed 1) | −20.3 | −20.3 | −20.6 | −20.6 | −19.5 |
+| learned baseline (seed 2) | −19.8 | −19.1 | −17.8 | −15.5 | −14.6 |
+
+At equal training budgets the baseline run improves much earlier. Its moving average first rises above −18 at episode 391, against 737 without the baseline. By episode 600 it is about 5 points ahead. **Evaluation (checkpoint at episode 600, 500 games): mean −12.61, std 3.23, best game +1.** This checkpoint has seen only 600 training episodes, against 1800 for the no-baseline checkpoint. Even so, it scores within 1.5 points of it. The fair comparison is the table above, at matched episode counts. This is one seed per arm, and some of the gap could be seed luck. The CartPole results, with three seeds, are the stronger evidence for the baseline.
 
 ## 2.4 Edge cases (both parts)
 
@@ -142,7 +147,7 @@ PONG_BL_TEXT
 2. **First 10 steps by hand** (`*-trace.json`, written for the first training episode). CartPole seed 0: actions are near 50/50 ($\pi\approx0.51/0.49$), every reward is 1, and $G_9=10.247$, $G_8=10.734=1+0.95\cdot10.247$, so the recursion checks by hand. Pong: rewards are 0 for the first 10 steps and $G_t$ grows by exactly a factor $1/0.99$ going backwards ($-1.089, -1.100, -1.111,\dots$). Environment actions are only 2 and 3.
 3. **Learning-rate test (diagnosing the collapse).** With lr = 0.01 and no baseline, all three CartPole seeds converge to ~9-step episodes. The median gradient norm over training is **exactly 0**: the softmax is saturated, the sampled action has probability $\approx$ 1, and $\nabla\log\pi=0$, so the agent can never recover. Pong at lr = 0.01 shows the same thing: every evaluation game ends 0–21 after exactly 764 steps, i.e. the paddle is stuck in one action. The reason is that all CartPole rewards are positive, so without a baseline every sampled action is reinforced, and a large step size locks in whatever was sampled early. Dropping to lr = 0.001 fixes it (left panel, green).
 4. **Discount-factor test.** With $\gamma=0.99$ (lr = 0.001, otherwise identical), CartPole learns more slowly than with $\gamma=0.95$ (purple line, left panel). This is expected: the return now sums ~100 future rewards instead of ~20, so its variance is higher and the credit signal is weaker.
-5. **Baseline reduces variance.** Middle panel: over long stretches of training, $\mathrm{Var}(G_t-V_\phi(s_t))$ within an episode is 3–30× smaller than $\mathrm{Var}(G_t)$. While seed 0 was stuck in 9-step episodes the ratio fell to $10^{-3}$, because the value head fitted those returns almost perfectly. The ratio goes back towards 1 when the policy changes faster than the critic can follow. PONG_GRAD_TEXT
+5. **Baseline reduces variance.** Middle panel: over long stretches of training, $\mathrm{Var}(G_t-V_\phi(s_t))$ within an episode is 3–30× smaller than $\mathrm{Var}(G_t)$. While seed 0 was stuck in 9-step episodes the ratio fell to $10^{-3}$, because the value head fitted those returns almost perfectly. The ratio goes back towards 1 when the policy changes faster than the critic can follow. In Pong the picture is different. Over episodes 100–600 the per-episode advantage variance with the baseline (median 0.33) is not smaller than the return variance (0.29), and the gradient norms are similar (median 115 vs 109, right panel). With rewards only every few hundred frames, the value head has not yet learned to predict the return. The faster learning in Pong therefore cannot be credited to variance reduction from this measurement alone.
 6. **Reduced randomness.** Acting greedily (argmax) with the CartPole baseline seed 0 checkpoint gives 481.0 ± 93.2 over 50 episodes, versus 435.0 ± 163.9 when sampling. Most of the evaluation spread comes from sampling noise in the policy, not from a bad mean policy.
 7. **Several seeds.** CartPole has 3 seeds per setting and the conclusions hold for all of them. Pong has one seed per setting because of compute, so its comparison is suggestive, not conclusive.
 

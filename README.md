@@ -32,7 +32,7 @@ Run names do not include the learning rate, so runs that share a config name and
 PYTHONPATH=src python scripts/dp_validation_extra.py
 python scripts/make_pg_figures.py
 python scripts/parallel_evaluate.py --checkpoint checkpoints/RUN-episode-N.pt --episodes 500 --workers 16
-cd report && pandoc report.md -o report.pdf --pdf-engine=xelatex -V mainfont="STIX Two Text"
+cd report && pandoc report.md -o report.pdf --pdf-engine=xelatex -V mainfont="Palatino"
 ```
 
 ## Installation
