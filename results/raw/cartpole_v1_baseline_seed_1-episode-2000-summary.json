@@ -1,0 +1,11 @@
+{
+  "checkpoint": "checkpoints/cartpole_v1_baseline_seed_1-episode-2000.pt",
+  "environment": "CartPole-v1",
+  "training_episode": 2000,
+  "episodes": 500,
+  "deterministic": false,
+  "mean_reward": 500.0,
+  "standard_deviation": 0.0,
+  "minimum_reward": 500.0,
+  "maximum_reward": 500.0
+}

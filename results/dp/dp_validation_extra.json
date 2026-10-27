@@ -1,0 +1,124 @@
+{
+  "threshold_base": 13,
+  "finite_horizon_t0_threshold": 13,
+  "vi_iterations": 519,
+  "pi_iterations": 6,
+  "pi_residual_history": [
+    477.8976275913624,
+    3856.1540144532137,
+    96.65655239172872,
+    28.4307070200299,
+    3.9472647176764895,
+    9.094947017729282e-13
+  ],
+  "horizon_gap": {
+    "1": 3421.5864771820247,
+    "5": 2011.8339771820247,
+    "10": 917.0184338999234,
+    "25": 188.41746783877124,
+    "50": 52.249118465989795,
+    "100": 4.020300227412008,
+    "200": 0.023802303116553958,
+    "300": 0.00014092037872615037,
+    "500": 3.0763658287469298e-09
+  },
+  "sensitivity": [
+    {
+      "parameter": "dispatch_cost",
+      "value": 50.0,
+      "threshold": 11,
+      "threshold_type": true
+    },
+    {
+      "parameter": "dispatch_cost",
+      "value": 100.0,
+      "threshold": 13,
+      "threshold_type": true
+    },
+    {
+      "parameter": "dispatch_cost",
+      "value": 200.0,
+      "threshold": 14,
+      "threshold_type": true
+    },
+    {
+      "parameter": "dispatch_cost",
+      "value": 400.0,
+      "threshold": 15,
+      "threshold_type": true
+    },
+    {
+      "parameter": "holding_cost",
+      "value": 1.0,
+      "threshold": 14,
+      "threshold_type": true
+    },
+    {
+      "parameter": "holding_cost",
+      "value": 2.0,
+      "threshold": 13,
+      "threshold_type": true
+    },
+    {
+      "parameter": "holding_cost",
+      "value": 4.0,
+      "threshold": 11,
+      "threshold_type": true
+    },
+    {
+      "parameter": "capacity",
+      "value": 10,
+      "threshold": 9,
+      "threshold_type": true
+    },
+    {
+      "parameter": "capacity",
+      "value": 15,
+      "threshold": 13,
+      "threshold_type": true
+    },
+    {
+      "parameter": "capacity",
+      "value": 20,
+      "threshold": 16,
+      "threshold_type": true
+    },
+    {
+      "parameter": "gamma",
+      "value": 0.5,
+      "threshold": null,
+      "threshold_type": true
+    },
+    {
+      "parameter": "gamma",
+      "value": 0.9,
+      "threshold": 13,
+      "threshold_type": true
+    },
+    {
+      "parameter": "gamma",
+      "value": 0.95,
+      "threshold": 13,
+      "threshold_type": true
+    },
+    {
+      "parameter": "gamma",
+      "value": 0.99,
+      "threshold": 13,
+      "threshold_type": true
+    }
+  ],
+  "deterministic_check": {
+    "horizon": 10,
+    "max_abs_gap_enumeration_vs_induction": 1.7053025658242404e-13,
+    "one_step_max_abs_gap_vs_hand_formula": 0.0,
+    "one_step_dispatch_states": 0
+  },
+  "value_at": {
+    "0": 576.6701677643557,
+    "13": 676.6701677643557,
+    "50": 1001.5277317440899,
+    "100": 1709.0425409319603,
+    "200": 3821.5864771820247
+  }
+}

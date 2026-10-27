@@ -11,6 +11,30 @@ This repository contains reproducible implementations and experiments for:
 
 The shuttle state is the number of waiting customers, capped at 200. At each decision epoch, the action is either wait or dispatch. A dispatch removes up to 15 passengers. Holding cost is charged after dispatch and before new arrivals. Arrivals are uniformly distributed over `{1, 2, 3, 4, 5}`. Overflow probability is aggregated at state 200. The terminal value for the finite-horizon problem is zero, and all algorithms minimize discounted cumulative cost.
 
+## Report
+
+The submitted report is `report/report.pdf` (source `report/report.md`, figures in `report/figures/`). It maps to these runs:
+
+| Report section | Config | Seeds | Results |
+|---|---|---|---|
+| Q2 (DP) | `scripts/run_dp.sh`, `scripts/dp_validation_extra.py` | – | `results/dp/` |
+| CartPole, no baseline | `configs/cartpole_no_baseline_lr001.yaml` (lr 0.001) | 0, 1, 2 | `results/lr001/` |
+| CartPole, no baseline, lr 0.01 (validation) | `configs/cartpole_no_baseline.yaml` | 0, 1, 2 | `results/raw/cartpole_v1_no_baseline_lr0.01_*` |
+| CartPole, γ = 0.99 (validation) | `configs/cartpole_no_baseline_lr001_gamma099.yaml` | 10 | `results/lr001/*gamma0.99*` |
+| CartPole, learned baseline | `configs/cartpole_baseline.yaml` (lr 0.01) | 0, 1, 2 | `results/raw/cartpole_v1_baseline_*` |
+| Pong, no baseline | `configs/pong_no_baseline_tuned.yaml` (lr 0.001) | 1 | `results/raw/pong_v5_no_baseline_seed_1*` |
+| Pong, learned baseline | `configs/pong_baseline_tuned.yaml` (lr 0.001) | 2 | `results/raw/pong_v5_baseline_seed_2*` |
+| Pong, lr 0.01 (validation) | `configs/pong_no_baseline.yaml`, `configs/pong_baseline.yaml` | 0 | `results/raw/pong_v5_*_seed_0*` |
+
+Run names do not include the learning rate, so runs that share a config name and seed overwrite each other's files; the lr 0.01 / 0.001 CartPole files were renamed after training. To rebuild the report figures and PDF:
+
+```bash
+PYTHONPATH=src python scripts/dp_validation_extra.py
+python scripts/make_pg_figures.py
+python scripts/parallel_evaluate.py --checkpoint checkpoints/RUN-episode-N.pt --episodes 500 --workers 16
+cd report && pandoc report.md -o report.pdf --pdf-engine=xelatex -V mainfont="STIX Two Text"
+```
+
 ## Installation
 
 Python 3.10, 3.11, or 3.12 is required.
@@ -114,5 +138,5 @@ The random-policy comparison tests whether learning improves over an untrained a
 - The first ten transitions of the first episode are saved as an audit trace.
 - Basic REINFORCE uses the uncentered discounted return directly. Baseline experiments use the learned value estimate and record variance before optional normalization.
 - Baseline and no-baseline comparisons use the same seeds, training budgets, environment versions, and evaluation protocol.
-- Large checkpoints, ROMs, and raw training logs are intentionally excluded from Git.
+- Large checkpoints and ROMs are excluded from Git. Per-episode training CSVs, evaluation CSVs and JSON summaries are committed under `results/` so every figure can be rebuilt without retraining.
 

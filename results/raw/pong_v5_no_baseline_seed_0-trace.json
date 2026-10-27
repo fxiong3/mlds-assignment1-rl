@@ -1,0 +1,132 @@
+[
+  {
+    "step": 0,
+    "state": null,
+    "policy_action": 1,
+    "environment_action": 3,
+    "reward": 0.0,
+    "action_probabilities": [
+      0.4829813241958618,
+      0.5170186758041382
+    ],
+    "value": 0.015620769001543522,
+    "discounted_return": -1.088759422302246
+  },
+  {
+    "step": 1,
+    "state": null,
+    "policy_action": 0,
+    "environment_action": 2,
+    "reward": 0.0,
+    "action_probabilities": [
+      0.4830465018749237,
+      0.5169534683227539
+    ],
+    "value": 0.01523313857614994,
+    "discounted_return": -1.0997569561004639
+  },
+  {
+    "step": 2,
+    "state": null,
+    "policy_action": 1,
+    "environment_action": 3,
+    "reward": 0.0,
+    "action_probabilities": [
+      0.4832102060317993,
+      0.5167898535728455
+    ],
+    "value": 0.014275263994932175,
+    "discounted_return": -1.1108657121658325
+  },
+  {
+    "step": 3,
+    "state": null,
+    "policy_action": 0,
+    "environment_action": 2,
+    "reward": 0.0,
+    "action_probabilities": [
+      0.48309326171875,
+      0.51690673828125
+    ],
+    "value": 0.015275625512003899,
+    "discounted_return": -1.122086524963379
+  },
+  {
+    "step": 4,
+    "state": null,
+    "policy_action": 0,
+    "environment_action": 2,
+    "reward": 0.0,
+    "action_probabilities": [
+      0.48311853408813477,
+      0.5168814659118652
+    ],
+    "value": 0.013010501861572266,
+    "discounted_return": -1.133420705795288
+  },
+  {
+    "step": 5,
+    "state": null,
+    "policy_action": 1,
+    "environment_action": 3,
+    "reward": 0.0,
+    "action_probabilities": [
+      0.48268502950668335,
+      0.5173149704933167
+    ],
+    "value": 0.01472247764468193,
+    "discounted_return": -1.1448694467544556
+  },
+  {
+    "step": 6,
+    "state": null,
+    "policy_action": 0,
+    "environment_action": 2,
+    "reward": 0.0,
+    "action_probabilities": [
+      0.4822877049446106,
+      0.5177122950553894
+    ],
+    "value": 0.015209009870886803,
+    "discounted_return": -1.1564338207244873
+  },
+  {
+    "step": 7,
+    "state": null,
+    "policy_action": 0,
+    "environment_action": 2,
+    "reward": 0.0,
+    "action_probabilities": [
+      0.48226189613342285,
+      0.5177381038665771
+    ],
+    "value": 0.01583733782172203,
+    "discounted_return": -1.1681149005889893
+  },
+  {
+    "step": 8,
+    "state": null,
+    "policy_action": 1,
+    "environment_action": 3,
+    "reward": 0.0,
+    "action_probabilities": [
+      0.4826849102973938,
+      0.5173150897026062
+    ],
+    "value": 0.01546170748770237,
+    "discounted_return": -1.1799139976501465
+  },
+  {
+    "step": 9,
+    "state": null,
+    "policy_action": 1,
+    "environment_action": 3,
+    "reward": 0.0,
+    "action_probabilities": [
+      0.48245465755462646,
+      0.5175453424453735
+    ],
+    "value": 0.013306800276041031,
+    "discounted_return": -1.191832423210144
+  }
+]

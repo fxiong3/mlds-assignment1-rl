@@ -13,9 +13,8 @@ results/raw/*.npz
 results/raw/*.pt
 results/raw/*.pth
 results/raw/*.jsonl
-results/raw/*.csv
-results/raw/*.json
 results/smoke/
+logs/
 
 # Atari ROMs and local environment files
 roms/
@@ -25,5 +24,4 @@ roms/
 report/*.aux
 report/*.log
 report/*.out
-report/*.pdf
 

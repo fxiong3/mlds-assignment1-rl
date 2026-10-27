@@ -1,0 +1,17 @@
+{
+  "environment": "Pong-v5",
+  "episodes": 1000,
+  "gamma": 0.99,
+  "learning_rate": 0.01,
+  "seed": 0,
+  "use_baseline": true,
+  "normalize_advantage": false,
+  "value_loss_coefficient": 0.5,
+  "hidden_size": 128,
+  "device": "cuda",
+  "max_steps_per_episode": 10000,
+  "checkpoint_every": 100,
+  "optimization_batch_size": 256,
+  "output_dir": "results/raw",
+  "checkpoint_dir": "checkpoints"
+}

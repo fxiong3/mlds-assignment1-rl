@@ -1,0 +1,10 @@
+{
+  "environment": "Pong-v5",
+  "policy": "uniform_random",
+  "seed": 0,
+  "episodes": 500,
+  "mean_reward": -20.426,
+  "standard_deviation": 0.7978245421143673,
+  "minimum_reward": -21.0,
+  "maximum_reward": -15.0
+}
